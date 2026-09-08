@@ -1,0 +1,16 @@
+{
+  "product": "YNAB Evergreen",
+  "marketingVersion": "26.32",
+  "build": "735",
+  "bundleIdentifier": "com.youneedabudget.evergreen.YNAB-Evergreen",
+  "baseline": {
+    "description": "Decrypted stock IPA supplied locally at build time",
+    "sha256": "ecfe9544602813d2bd20544712522615b72850125ce6dccb656e9186086644ef",
+    "filename": "com_youneedabudget_evergreen_YNAB_Evergreen_26_32_eeveedecrypter.ipa"
+  },
+  "extensions": [
+    "com.youneedabudget.evergreen.YNAB-Evergreen.YNABWidget",
+    "com.youneedabudget.evergreen.YNAB-Evergreen.YNABWidgetIntentHandler"
+  ],
+  "reproducibility": "The functional result is reproducible; signed bytes vary with the signer and signing metadata."
+}
