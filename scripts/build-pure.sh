@@ -27,7 +27,7 @@ if ! command -v zsign >/dev/null 2>&1; then
   exit 69
 fi
 
-if [[ -e "$output_ipa" || "${output_ipa:A}" == "$project_root"/* ]]; then
+if [[ -e "$output_ipa" || -e "$output_ipa.neutral.json" || "${output_ipa:A}" == "$project_root"/* ]]; then
   print -u2 'output must be a new file outside the repository'
   exit 65
 fi
@@ -123,6 +123,9 @@ if otool -L "$output_app/$main_executable_name" |
 fi
 
 output_sha256=$(shasum -a 256 "$output_ipa" | awk '{print $1}')
+# Receipt binds this exact neutral archive to the verified stock input.
+# Archive hashes vary across signing runs; filenames are not identity.
+print -r -- "{\"baseline_sha256\":\"$actual_input_sha256\",\"neutral_sha256\":\"$output_sha256\"}" > "$output_ipa.neutral.json"
 print "built pure signer-neutral IPA: $output_ipa"
 print "input_sha256=$actual_input_sha256"
 print "output_sha256=$output_sha256"
