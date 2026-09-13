@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="color-scheme" value="light dark">
+    <title>Account Settings | YNAB</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no">
+    <meta name="robots" content="noindex">
+    <link rel="stylesheet" href="assets/application-767ed2012f51073fffde0b433cc0e4eb507ed84e7f969d50ca97e54b47c8eedf.css">
+    <style>
+      :root { --cdn_url_ynab-tree-logo_svg: url("assets/doodle-logo-61f5879040423d1361d010e894666a23db6ca20f2630c8bcb5fe0c54cbc62a72.svg"); }
+      .offline-status { background: var(--buttonSecondaryBackground, #ebe9e2); border-radius: .5rem; margin-bottom: 1rem; padding: .75rem 1rem; }
+      .offline-disabled { opacity: .55; }
+    </style>
+  </head>
+  <body data-page="registrations#edit" data-ynab-device="ios" class="theme-match-system">
+    <div class="page-wrapper">
+      <header class="page-header">
+        <div class="page-header__back-section">
+          <a class="page-header__back-link page-header__back-link--show-label launch_app_button" aria-label="Back to Plan" title="Back to Plan" href="/">
+            <span class="page-header__logomark"></span>
+            <span class="page-header__back-link__label page-header__back-link__label--with-short-label">
+              <span class="page-header__back-link__label__full">Back to Plan</span>
+              <span class="page-header__back-link__label__short">Plan</span>
+            </span>
+          </a>
+        </div>
+        <h1 class="page-header__heading">Account Settings</h1>
+        <div class="page-header__close-section" id="close-link"><a class="page-header__close-link launch_app_button" title="Back to Plan" aria-label="Back to Plan" href="/">×</a></div>
+      </header>
+      <main role="main" class="page-main"><section>
+        <h2>Account Settings</h2>
+        <div class="offline-status"><strong>Offline</strong><br>Your confirmed account details are available. A first-name change will be sent when you reconnect.</div>
+        <p id="account_email"></p>
+        <form class="form registration-form" id="change_first_name_form">
+          <div>
+            <div><p><strong>First Name</strong><br>We use your first name to personalize your YNAB experience.</p></div>
+            <div class="secondary-container">
+              <div class="field left">
+                <input value="" data-confirmed-value="" class="text-field" spellcheck="false" maxlength="100" placeholder="First Name" size="100" type="text" name="user[first_name]" id="user_first_name">
+              </div>
+              <div class="button-container right">
+                <button name="submit_first_name_change" type="submit" class="button button-submit" id="submit_first_name_change" disabled>Save</button>
+              </div>
+            </div>
+          </div>
+        </form>
+        <p id="pending_first_name" role="status" hidden></p>
+        <hr>
+        <h3 id="login-methods">Login Methods</h3>
+        <div class="secondary-container offline-disabled">
+          <div class="left"><p><strong>Password</strong><br>Requires an internet connection</p></div>
+          <div class="right"><p><button class="button" type="button" disabled>Change Password</button></p></div>
+        </div>
+        <div class="secondary-container offline-disabled">
+          <div class="left"><p><strong>OpenID Sign-In</strong><br>Requires an internet connection</p></div>
+          <div class="right"><p><button class="button" type="button" disabled>Configure</button></p></div>
+        </div>
+      </section></main>
+    </div>
+    <script>
+      (() => {
+        const close = event => {
+          event.preventDefault();
+          window.webkit.messageHandlers.callback.postMessage({action:'closeWebView', params:{}});
+        };
+        document.querySelectorAll(".launch_app_button").forEach(control => control.addEventListener("click", close));
+        const form = document.getElementById("change_first_name_form");
+        const input = document.getElementById("user_first_name");
+        const submit = document.getElementById("submit_first_name_change");
+        const pending = document.getElementById("pending_first_name");
+        let busy = false;
+        let userId = null;
+        const update = () => {
+          const value = input.value.trim();
+          submit.disabled = busy || !userId || !value || value === input.dataset.confirmedValue || value === input.dataset.pendingValue;
+        };
+        input.addEventListener("input", update);
+        window.ynabIdentityResult = identity => {
+          document.getElementById('account_email').textContent = identity.email || '';
+          userId = identity.userId || null;
+          input.value = identity.firstName || '';
+          input.dataset.confirmedValue = input.value;
+          update();
+        };
+        window.ynabNameResult = result => {
+          busy = false;
+          if (!result.error) window.ynabIdentityResult(result);
+          pending.hidden = false;
+          pending.textContent = result.error || 'Saved on this device.';
+          update();
+        };
+        window.webkit.messageHandlers.callback.postMessage({action:'ynabReadIdentity', params:{}});
+        form.addEventListener("submit", event => {
+          event.preventDefault();
+          const value = input.value.trim();
+          if (!value || busy || !userId) return;
+          busy = true;
+          window.webkit.messageHandlers.callback.postMessage({
+            action: "ynabUpdateFirstName",
+            params: { userId, firstName: value, confirmedBase: input.dataset.confirmedValue }
+          });
+          pending.hidden = false;
+          pending.textContent = 'Saving…';
+          update();
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,103 @@
+<!doctype html>
+<html data-ynab-offline="true">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>YNAB</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="robots" content="noindex">
+    <meta name="color-scheme" content="light dark">
+    <script>
+      const iOSVersionMatch = navigator.userAgent.match(/(?:CPU(?: iPhone)? OS|iPhone OS) ([0-9_]+)/);
+      const iOSVersion = iOSVersionMatch ? iOSVersionMatch[1].replace(/_/g, ".") : "";
+      const offlineAccountRequests = new Map();
+      let nextOfflineAccountRequest = 0;
+      function performOfflineAccountAction(action, budgetId, payload) {
+        const requestId = `offline-account-${Date.now()}-${++nextOfflineAccountRequest}`;
+        return new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            offlineAccountRequests.delete(requestId);
+            reject(new Error("The local account operation timed out."));
+          }, 30000);
+          offlineAccountRequests.set(requestId, {resolve, reject, timeout});
+          try {
+            window.webkit.messageHandlers.callback.postMessage({
+              action,
+              params: {requestId, budgetId, payload}
+            });
+          } catch (error) {
+            clearTimeout(timeout);
+            offlineAccountRequests.delete(requestId);
+            reject(error);
+          }
+        });
+      }
+      window.ynabOfflineAccountResult = ({requestId, result} = {}) => {
+        const pending = offlineAccountRequests.get(requestId);
+        if (!pending) return;
+        clearTimeout(pending.timeout);
+        offlineAccountRequests.delete(requestId);
+        if (result && result.error) pending.reject(new Error(result.error));
+        else pending.resolve(result || {});
+      };
+      window.AccountWidgetConfig = window.AccountWidgetConfig || {
+        closeWidget: sync => window.webkit.messageHandlers.callback.postMessage({action:'closeWidget',params:{sync:!!sync}}),
+        onInit: () => window.webkit.messageHandlers.callback.postMessage({action:'onInit',params:{}})
+      };
+      window.mobile = {
+        getSessionToken: function () { return ""; },
+        isOnline: function () { return false; },
+        createBudgetAccount: function (budgetId, payload) {
+          return performOfflineAccountAction("ynabCreateOfflineAccount", budgetId, payload);
+        },
+        validateBudgetAccount: function (budgetId, payload) {
+          return performOfflineAccountAction("ynabValidateOfflineAccount", budgetId, payload);
+        },
+        categoriesForPairing: function (budgetId) {
+          return performOfflineAccountAction("ynabReadOfflinePairingCategories", budgetId, {});
+        }
+      };
+      window.ACCOUNT_WIDGET_CLIENT_CONSTANTS = {
+        BUDGET_CURRENCY: "USD",
+        SESSION_TOKEN: window.mobile.getSessionToken(),
+        DEVICE_ID: "offline-device",
+        DEVICE_OS: "iOS",
+        DEVICE_OS_VERSION: iOSVersion,
+        DEVICE_APP_VERSION: "26.32",
+        DEVICE_TYPE: "iOS",
+        DEVICE_REGION: "US",
+        LINK_TO_NATIVE_CLIENT: "",
+        ACTIVE_FLAGS: ["important-web-add-account-flow-migration"],
+        USER_COUNTRY_CODE: "US",
+        POPULAR_INSTITUTIONS_LOCALE: null,
+        USER: { id: "offline-user" },
+        PRODUCTION: false,
+        YNAB_APP_VERSION: "26.32.0",
+        UPDATE_ACCOUNT: false,
+        CASTLE_PUBLISHABLE_KEY: "",
+        CASTLE_USER_JWT: "",
+        DATADOG_RUM_CLIENT_TOKEN: "",
+        DATADOG_RUM_APPLICATION_ID: "",
+        DATADOG_RUM_SERVICE: "ynab-account-widget",
+        DATADOG_RUM_ENV: "offline",
+        DATADOG_RUM_SESSION_SAMPLE_RATE: 0,
+        WIDGET_ID: "offline-widget"
+      };
+      document.write('<script type="application/json" id="account_widget_client_constants">' + JSON.stringify(window.ACCOUNT_WIDGET_CLIENT_CONSTANTS).replace(/</g, "\\u003c") + '</scr' + 'ipt>');
+    </script>
+    <script src="assets/packs/js/runtime-796f5ca3e9ae363a70db.js"></script>
+    <script src="assets/packs/js/418-6d029bc76026b00b6703.js"></script>
+    <script src="assets/packs/js/956-58d5003c1127c1a73975.js"></script>
+    <script src="assets/packs/js/831-47d2ad46302d9adadf89.js"></script>
+    <script src="assets/packs/js/account_widget_head-7107f600ab1bde7125e0.js"></script>
+    <meta name="ynab-account-widget-mobile/config/environment" content="%7B%22modulePrefix%22%3A%22ynab-account-widget-mobile%22%2C%22environment%22%3A%22production%22%2C%22rootURL%22%3A%22%2F%22%2C%22locationType%22%3A%22hash%22%2C%22EmberENV%22%3A%7B%22FEATURES%22%3A%7B%7D%2C%22EXTEND_PROTOTYPES%22%3A%7B%22Date%22%3Afalse%2C%22Array%22%3Afalse%7D%2C%22_APPLICATION_TEMPLATE_WRAPPER%22%3Afalse%2C%22_JQUERY_INTEGRATION%22%3Afalse%2C%22_TEMPLATE_ONLY_GLIMMER_COMPONENTS%22%3Atrue%7D%2C%22APP%22%3A%7B%7D%7D">
+    <link rel="stylesheet" href="assets/ynab_account_widget_mobile/assets/ynab-account-widget-mobile.8ad957f255ea1eccc4b739c830656436.css">
+    <link rel="stylesheet" href="assets/provider_cards/provider-cards.css">
+  </head>
+  <body data-ynab-device="ios" data-offline="true">
+    <script src="assets/ynab_account_widget_mobile/assets/vendor.0c7d892c70a7cae4e9cee34b34f35c99.js"></script>
+    <script src="assets/ynab_account_widget_mobile/assets/chunk.5ef61e4716cab7872863.js"></script>
+    <script src="assets/ynab_account_widget_mobile/assets/chunk.9a5888b8260114e4585e.js"></script>
+    <script src="offline-controls.js"></script>
+  </body>
+</html>

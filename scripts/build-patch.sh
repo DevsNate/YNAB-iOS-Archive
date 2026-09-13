@@ -2,7 +2,7 @@
 set -euo pipefail
 script_dir=${0:A:h}; root=${script_dir:h}; input=${1:-}; output=${2:-}
 if [[ -z "$input" || -z "$output" ]]; then print -u2 "usage: $0 neutral.ipa output.ipa [neutral-receipt.json]"; exit 64; fi
-for tool in clang codesign find plutil ruby shasum unzip zsign; do command -v "$tool" >/dev/null || { print -u2 "required tool not found: $tool"; exit 69; }; done
+for tool in clang codesign find node plutil ruby shasum unzip zsign; do command -v "$tool" >/dev/null || { print -u2 "required tool not found: $tool"; exit 69; }; done
 [[ -x /usr/libexec/PlistBuddy ]] || { print -u2 'PlistBuddy is required'; exit 69; }
 expected=$(plutil -extract baseline.sha256 raw -o - "$root/baseline/manifest.json")
 actual=$(shasum -a 256 "$input" | awk '{print $1}')
@@ -15,6 +15,7 @@ receipt=${3:-"$input.neutral.json"}
 stage=$(mktemp -d /tmp/ynab-ios-url.XXXXXX); trap 'rm -rf "$stage"' EXIT
 unzip -q "$input" -d "$stage/source"
 app=$(find "$stage/source/Payload" -maxdepth 1 -type d -name '*.app' -print -quit); [[ -n "$app" ]] || exit 65
+zsh "$script_dir/install-offline-assets.sh" "$app"
 binary="$app/$(plutil -extract CFBundleExecutable raw -o - "$app/Info.plist")"; shared="$app/YNABSharedLibMobile.packaged.min.js"
 ruby - "$binary" <<'RUBY'
 path=ARGV.fetch(0); d=File.binread(path); old='^.+@([A-Za-z0-9-]+\\.)+[A-Za-z]{2}[A-Za-z]*$'.b
@@ -33,6 +34,8 @@ old='function c(e,t){return ne(this,void 0,void 0,(function*(){return yield oe((
 new='function c(e,t){return ne(this,void 0,void 0,(function*(){return yield oe((()=>ne(this,void 0,void 0,(function*(){const n="function"==typeof ynabConfiguredServerURL?ynabConfiguredServerURL():"";n&&(o().apiAdapter.config.serverUrl=n);return yield s().loginUserWithSessionToken(t),ie.info("loginUserWithSessionToken completed."),m(o().store,t)}))))}))}'
 raise 'session owner occurrence mismatch' unless d.scan(old).length==1; d.sub!(old,new); File.binwrite(path,d)
 RUBY
+node "$script_dir/patch-profile-action.mjs" "$shared"
+node "$script_dir/patch-account-action.mjs" "$shared"
 /usr/libexec/PlistBuddy -c 'Delete :NSAppTransportSecurity' "$app/Info.plist" 2>/dev/null || true
 /usr/libexec/PlistBuddy -c 'Add :NSAppTransportSecurity dict' "$app/Info.plist"
 /usr/libexec/PlistBuddy -c 'Add :NSAppTransportSecurity:NSAllowsLocalNetworking bool true' "$app/Info.plist"
@@ -51,6 +54,7 @@ codesign --verify --deep --strict "$checked"
 otool -L "$checked/$(basename "$binary")" | grep -Fq '@executable_path/YNABServerURLBridge.dylib'
 [[ -z "$(find "$checked" -name embedded.mobileprovision -print -quit)" ]]
 cmp "$shared" "$checked/YNABSharedLibMobile.packaged.min.js"
+diff -rq "$app/YNABOffline" "$checked/YNABOffline"
 # Publish only after the candidate has passed the package gates.
 mv "$stage/candidate.ipa" "$output"
 print "built current iOS patches: $output"; print "neutral_input_sha256=$actual"

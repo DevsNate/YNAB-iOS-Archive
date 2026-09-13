@@ -37,7 +37,9 @@ never commit hashes. Existing outputs are refused; use a new filename to rebuild
 
 The patch validates and persists the origin only when login is submitted,
 restores it before cached-session login, and leaves password, session, sync,
-database and calculation owners stock. Build/sign success still requires
-device acceptance.
+database and calculation owners stock. It also installs the current offline
+account surfaces. Their unlinked-account flow uses the captured stock form and
+the stock shared-library account action; it does not write SQLite directly.
+Build/sign success still requires device acceptance.
 
 Detailed evidence and limitations live in sibling YNAB-KB at `Engineering-KB/docs/ios/stock-baseline.md` (or under `YNAB_KB_ROOT`). See [the modification ledger](docs/modification-ledger.md). Raw IPAs, extracted apps and signing material remain external.

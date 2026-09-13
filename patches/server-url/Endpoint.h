@@ -6,3 +6,4 @@ FOUNDATION_EXPORT NSString *YNABSavedOrigin(void);
 FOUNDATION_EXPORT NSString *YNABSelectOrigin(NSString *value);
 FOUNDATION_EXPORT NSURLRequest *YNABRouteRequest(NSURLRequest *request, NSString *origin);
 FOUNDATION_EXPORT BOOL YNABURLMatchesOrigin(NSURL *url, NSString *origin);
+FOUNDATION_EXPORT NSString *YNABOfflineDocumentForURL(NSURL *url);

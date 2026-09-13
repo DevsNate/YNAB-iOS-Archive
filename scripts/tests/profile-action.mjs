@@ -1,0 +1,25 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+import {patchProfileAction} from '../patch-profile-action.mjs';
+const file = process.argv[2];
+if (!file) throw Error('Pass the sealed stock shared-library JS path');
+const source = fs.readFileSync(file,'utf8');
+const patched = patchProfileAction(source);
+assert.throws(()=>patchProfileAction(patched), /Unsupported/);
+assert.throws(()=>patchProfileAction(source.replace('class Fc{','class Renamed{')), /Unsupported/);
+const start = patched.indexOf('if(t==="ynabOfflineSetFirstName")');
+const end = patched.indexOf('const a=t.charAt(0)',start);
+const branch = patched.slice(start,end);
+let calls, persisted, failWrite, rejectEdit;
+const user={userId:'current',firstName:'Before',email:'test@example.invalid'};
+const lib={loggedInUser:user,entityManager:{},store:{syncCatalogDataWithLocalStorage(){calls.push('persist');if(failWrite) throw Error('disk failed');persisted=user.firstName;return true;}}};
+const context=vm.createContext({o:()=>lib,Fc:class {async perform(id,name){calls.push('edit');if(rejectEdit)return{ok:false,err:true};user.firstName=name;return{ok:true,err:false};}}});
+const run=vm.runInContext(`async function run(n,t){${branch.replaceAll('yield ','await ')}return 'stock-dispatch';};run`,context);
+calls=[];await run({userId:'current',firstName:' After '},'ynabOfflineSetFirstName');
+assert.equal(persisted,'After');assert.deepEqual(calls,['edit','persist']);
+for(const state of [{userId:'other',firstName:'Bad'},{userId:'current',firstName:' '},{userId:'current',firstName:42}]){calls=[];await assert.rejects(run(state,'ynabOfflineSetFirstName'));assert.deepEqual(calls,[]);}
+rejectEdit=true;calls=[];await assert.rejects(run({userId:'current',firstName:'No'},'ynabOfflineSetFirstName'));assert.deepEqual(calls,['edit']);rejectEdit=false;
+failWrite=true;await assert.rejects(run({userId:'current',firstName:'Unsaved'},'ynabOfflineSetFirstName'),/disk failed/);
+assert.equal(await run({},'save'),'stock-dispatch');
+console.log('Profile dispatch guards, edit/persist ordering, failure propagation and unrelated dispatch passed. Native persistence remains a device gate.');

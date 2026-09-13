@@ -1,0 +1,17 @@
+.account-widget-search-input {
+  display: none !important;
+}
+
+.account-widget-search-institutions h3 {
+  font-size: 0;
+}
+
+.account-widget-search-institutions h3::after {
+  content: "Bank Providers";
+  font-size: 0.875rem;
+}
+
+body[data-offline="true"] .account-widget-api-popular-list button {
+  opacity: 0.5;
+  pointer-events: none;
+}

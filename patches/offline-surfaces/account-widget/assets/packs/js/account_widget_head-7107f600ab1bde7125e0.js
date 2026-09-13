@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunkynab_api=self.webpackChunkynab_api||[]).push([[244],{3192:function(n,t,a){var c=a(2587),u=a(9831),e=(0,c.t)("account_widget_client_constants");(0,u.aP)(e),(0,u.A9)(e)}},function(n){n.O(0,[418,956,831],(function(){return t=3192,n(n.s=t);var t}));n.O()}]);
+//# sourceMappingURL=account_widget_head-7107f600ab1bde7125e0.js.map

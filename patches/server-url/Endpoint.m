@@ -73,3 +73,10 @@ NSURLRequest *YNABRouteRequest(NSURLRequest *request, NSString *origin) {
     [copy setValue:nil forHTTPHeaderField:@"Host"];
     return copy;
 }
+
+NSString *YNABOfflineDocumentForURL(NSURL *url) {
+    if (!url || ![url.path isKindOfClass:NSString.class]) return nil;
+    if (([url.path isEqual:@"/api/v1/account_widget"] || [url.path isEqual:@"/api/v1/account_widget/"])) return @"account-widget/index.html";
+    if ([url.path isEqual:@"/settings"] || [url.path isEqual:@"/settings/"]) return @"account-settings/index.html";
+    return nil;
+}
