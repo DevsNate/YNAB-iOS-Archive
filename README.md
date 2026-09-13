@@ -22,6 +22,16 @@ Two stable scripts own the pipeline: build-pure.sh prepares stock once;
 build-patch.sh consumes the neutral IPA and applies all current patches.
 Future features extend this patch stage. Final device signing stays separate.
 
+The patch stage also applies the guarded local-plan bootstrap transform to the
+temporary extracted app bundle. It selects the existing emoji starter template
+used by the Server at all four shared-runtime creation owners; the sealed
+baseline and neutral IPA remain unchanged. Run
+`node scripts/tests/plan-bootstrap-parity.mjs` for the source contract before
+device testing.
+It also applies the guarded category-pin transform so reconciled rows adopt the
+Server's `pinned_index` and `pinned_goal_index` values; run
+`node scripts/tests/category-pins.mjs` for that source contract.
+
 ```sh
 mkdir -p ../YNAB-Output/iOS/server-url-login
 ./scripts/build-pure.sh "$YNAB_IOS_BASELINE_IPA" ../YNAB-Output/iOS/server-url-login/neutral.ipa

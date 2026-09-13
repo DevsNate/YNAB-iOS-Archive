@@ -17,6 +17,8 @@ unzip -q "$input" -d "$stage/source"
 app=$(find "$stage/source/Payload" -maxdepth 1 -type d -name '*.app' -print -quit); [[ -n "$app" ]] || exit 65
 zsh "$script_dir/install-offline-assets.sh" "$app"
 binary="$app/$(plutil -extract CFBundleExecutable raw -o - "$app/Info.plist")"; shared="$app/YNABSharedLibMobile.packaged.min.js"
+node "$script_dir/patch-plan-bootstrap.mjs" "$shared"
+node "$script_dir/patch-category-pins.mjs" "$shared"
 ruby - "$binary" <<'RUBY'
 path=ARGV.fetch(0); d=File.binread(path); old='^.+@([A-Za-z0-9-]+\\.)+[A-Za-z]{2}[A-Za-z]*$'.b
 new='(?is)^\s*https?://.+?\s*$'.b
