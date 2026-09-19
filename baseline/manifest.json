@@ -1,12 +1,12 @@
 {
   "product": "YNAB Evergreen",
-  "marketingVersion": "26.32",
-  "build": "735",
+  "marketingVersion": "26.35",
+  "build": "744",
   "bundleIdentifier": "com.youneedabudget.evergreen.YNAB-Evergreen",
   "baseline": {
     "description": "Decrypted stock IPA supplied locally at build time",
-    "sha256": "ecfe9544602813d2bd20544712522615b72850125ce6dccb656e9186086644ef",
-    "filename": "com_youneedabudget_evergreen_YNAB_Evergreen_26_32_eeveedecrypter.ipa"
+    "sha256": "f6aff1df27ce87c21c60b16133c5be958ab3c20ec6c1a2be3be212064a4d1bde",
+    "filename": "com_youneedabudget_evergreen_YNAB_Evergreen_26_35.ipa"
   },
   "extensions": [
     "com.youneedabudget.evergreen.YNAB-Evergreen.YNABWidget",

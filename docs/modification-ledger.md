@@ -1,5 +1,52 @@
 # Modification ledger
 
+## V10-style signer-neutral baseline — YNAB 26.35 build 744
+
+The current baseline is derived from the sealed stock IPA with SHA-256
+`f6aff1df27ce87c21c60b16133c5be958ab3c20ec6c1a2be3be212064a4d1bde`.
+It preserves the stock main and extension bundle identifiers and changes only
+the three independently verified runtime App Group owners: the main app,
+YNABWidgetExtension and YNABWidgetIntentHandler.
+
+Each owner calls a 750-byte, relocation-free resolver injected into a verified
+zero-filled executable cave. The resolver loads Security.framework, reads the
+current process' signed App Group entitlement, selects the lexicographically
+smallest non-null value and returns it with +1 ownership to balance the stock
+caller release. It fails closed when no group is available. No explicit
+Keychain access-group owner exists in the audited YNAB wrapper, so no Keychain
+patch is included.
+
+The packaging stage removes ten `_CodeSignature` directories and strips the
+EOF signature payload from all 12 Mach-O slices while retaining empty
+`LC_CODE_SIGNATURE` commands and correcting `__LINKEDIT`. The arm64/arm64e
+universal Swift compatibility dylib remains universal. Non-Mach-O resources,
+bundle metadata, UUIDs and load dependencies remain stock.
+
+Two builds are byte-for-byte identical at SHA-256
+`4560b55327fad975cfa03f3803eecaa855c99ee4a0883a2a2ed26ce58c3e9df7`.
+The independent verifier, wrong-input rejection and overwrite rejection pass.
+zsign successfully reallocates all signatures and the signed result passes
+deep signature verification. A real Developer certificate/profile signing pass
+also reallocates every signature, preserves the stock bundle identifiers,
+applies the same five profile App Groups to the app and both extensions, and
+passes deep/strict verification. That stock-ID/profile-entitlement shape
+matches the previously device-accepted 26.32 signing convention. The resulting
+26.35 derivative has SHA-256
+`d390ae644c69dc945bc2334ab5c9c8dd8c08c94fdebf86809a7c4371765b843c`;
+it installed in place on the connected iPhone as YNAB 26.35 build 744 under
+the stock bundle identifier. The user then confirmed that the app launches,
+sign-in succeeds, the widget works, and notification authorization presents
+the expected prompt. Session persistence after force-quit and a concrete widget
+action also pass. The 26.35 signer-neutral baseline is therefore device-
+accepted for this bounded launch/session/widget scope. See
+`patches/signer-neutral/README.md` and the Engineering KB iOS baseline record.
+
+## Historical 26.32 build-735 work
+
+Everything below this heading describes the older 26.32 functional patch
+series. It is preserved as evidence but is not included in, or automatically
+portable to, the 26.35 signer-neutral carrier.
+
 The initial tooling baseline contains no functional app patches. That commit prepares the exact stock IPA for later patching using ad-hoc signing and provisioning removal. Detailed verification belongs to YNAB-KB `Engineering-KB/docs/ios/stock-baseline.md`. Signing preparation does not establish device or capability parity.
 ## Working-tree functional patch
 

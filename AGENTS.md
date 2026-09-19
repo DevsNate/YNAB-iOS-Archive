@@ -2,7 +2,15 @@
 
 Preserve unrelated changes. Keep private inputs, credentials, signing material and generated artifacts outside Git. Use portable paths. Inspect repository status, branch and remotes before editing.
 
-The sealed stock input is defined by `baseline/manifest.json`. Reuse `scripts/build-pure.sh` for stock-to-signer-neutral preparation; do not replace it with a new pipeline or import legacy functional patches without task-specific review. Preserve the baseline commit and keep each coherent functional change separately reviewable.
+The current sealed stock input is defined by `baseline/manifest.json`. Use
+`scripts/build-v10-signer-neutral.py` for the maintained stock-to-neutral
+transformation; `scripts/build-pure.sh` is only its compatibility entry point.
+For every new IPA version, first repeat the version-specific identity,
+entitlement, runtime-owner, instruction, code-cave and signing-layout audit.
+Never reuse an older version's offsets merely because its builder runs. Keep
+the neutral baseline, final signer-specific output and each functional patch
+separately reviewable. Legacy 26.32 functional patch scripts are not admitted
+for a newer baseline without their own version-specific analysis.
 
 ## Knowledge base integration
 
